@@ -8,7 +8,7 @@ const { sendGameToPlayers } = require("../helpers/socketHelper");
 
 exports.createGame = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     const code = generateCode(6);
     const { card_count, bet_amount } = req.body;
 
@@ -51,7 +51,7 @@ exports.createGame = async (req, res) => {
 
 exports.joinGame = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     const { game_code } = req.body;
     const game = await Game.findOne({
       game_code,
@@ -82,7 +82,7 @@ exports.joinGame = async (req, res) => {
 
 exports.startGame = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     console.log(user_id);
 
     const game = await Game.findOne({
@@ -141,7 +141,7 @@ exports.playTurn = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     const { cards, suit: newSuit } = req.body; // req.body.suit faqat ace uchun keladi
 
     const game = await Game.findOne({
@@ -385,7 +385,7 @@ exports.playTurn = async (req, res) => {
 
 exports.getFromDeck = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
 
     const game = await Game.findOne({
       "players.player": new mongoose.Types.ObjectId(user_id),
@@ -467,7 +467,7 @@ exports.getFromDeck = async (req, res) => {
 };
 
 exports.refillDeck = async (req, res) => {
-  const { user_id } = req.headers;
+  const { user_id } = req.user;
 
   try {
     const game = await Game.findOne({
@@ -513,7 +513,7 @@ exports.refillDeck = async (req, res) => {
 exports.kickPlayer = async (req, res) => {
   try {
     const { player_id } = req.body;
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
 
     const game = await Game.findOne({
       "players.player": new mongoose.Types.ObjectId(user_id),
@@ -572,7 +572,7 @@ exports.kickPlayer = async (req, res) => {
 
 exports.exitGame = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
 
     const game = await Game.findOne({
       "players.player": new mongoose.Types.ObjectId(user_id),
@@ -631,7 +631,7 @@ exports.exitGame = async (req, res) => {
 
 exports.startAnotherRound = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     const game = await Game.findOne({
       "players.player": new mongoose.Types.ObjectId(user_id),
       status: "waiting_next_round",
@@ -668,7 +668,7 @@ exports.startAnotherRound = async (req, res) => {
 
 exports.getUserGame = async (req, res) => {
   try {
-    const { user_id } = req.headers;
+    const { user_id } = req.user;
     let game = await Game.findOne({
       "players.player": new mongoose.Types.ObjectId(user_id),
       status: { $ne: "finished" },
@@ -687,7 +687,7 @@ exports.getUserGame = async (req, res) => {
 
     otherPlayers.forEach((p) => {
       if (Array.isArray(p.hand)) {
-        p.hand = p.hand.map(() => "😭"); 
+        p.hand = p.hand.map(() => "😭");
       }
     });
 
@@ -697,4 +697,3 @@ exports.getUserGame = async (req, res) => {
     return res.status(500).json({ message: "Serverda xatolik", err });
   }
 };
-

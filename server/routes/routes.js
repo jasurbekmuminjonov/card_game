@@ -3,6 +3,7 @@ const {
   registerUser,
   checkUsername,
   transferMoney,
+  loginUser,
 } = require("../controllers/user.controller");
 
 const {
@@ -21,6 +22,7 @@ const rt = express.Router();
 
 //user routes
 rt.post("/register", registerUser);
+rt.post("/login", loginUser);
 rt.post("/username/check", checkUsername);
 rt.post("/transfer", transferMoney);
 

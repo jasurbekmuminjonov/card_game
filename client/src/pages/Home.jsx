@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   useCheckUsernameMutation,
+  useLoginUserMutation,
   useRegisterUserMutation,
   // useTransferMoneyMutation,
 } from "../context/services/user.service";
@@ -14,15 +15,18 @@ import { l } from "../assets/lang.js";
 
 const Home = () => {
   const userId = localStorage.getItem("user_id");
+  const token = localStorage.getItem("token");
   const [gameCode, setGameCode] = useState("");
   const [cardAmount, setCardAmount] = useState(4);
   const [betAmount, setBetAmount] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isUsernameTaken, setIsUsernameTaken] = useState(false);
   const sl = localStorage.getItem("lang") || "ru";
 
   const [registerUser] = useRegisterUserMutation();
+  const [loginUser] = useLoginUserMutation();
   const [checkUsername, { isLoading: usernameLoading }] =
     useCheckUsernameMutation();
   // const [transferMoney] = useTransferMoneyMutation();
@@ -58,7 +62,7 @@ const Home = () => {
     check();
   }, [username, checkUsername, sl]);
 
-  async function handleRegister() {
+  async function handleRegister(authType) {
     try {
       if (!username) {
         notification.error({
@@ -70,12 +74,20 @@ const Home = () => {
           message: l[sl].username_regex,
         });
       }
-      const res = await registerUser({ username }).unwrap();
-      localStorage.setItem("username", res.data.username);
+      let res;
+      if (authType === "register") {
+        res = await registerUser({ username, password }).unwrap();
+      } else {
+        res = await loginUser({ username, password }).unwrap();
+      }
+      localStorage.setItem("token", res.data.token);
       localStorage.setItem("user_id", res.data.user_id);
       window.location.reload();
     } catch (err) {
       console.log(err);
+      notification.error({
+        message: l[sl][err.data.status],
+      });
     }
   }
 
@@ -104,7 +116,7 @@ const Home = () => {
   return (
     <div className="home">
       <div className="button-container">
-        {userId ? (
+        {userId && token ? (
           <>
             <div className="join-button">
               <input
@@ -223,8 +235,39 @@ const Home = () => {
               type="text"
               placeholder="Username"
             />
-            <button onClick={handleRegister} disabled={isUsernameTaken}>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="Password"
+            />
+            <button
+              onClick={() => handleRegister("register")}
+              disabled={isUsernameTaken || usernameLoading}
+            >
               {usernameLoading ? <RiHourglassFill /> : "Register"}
+            </button>
+            <p
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                fontSize: "12px",
+                color: "#185e3c",
+              }}
+            >
+              OR
+            </p>
+            <button
+              style={{
+                background: "transparent",
+                border: "1px solid #185e3c",
+                color: "#185e3c",
+              }}
+              disabled={usernameLoading}
+              onClick={() => handleRegister("login")}
+            >
+              Login
             </button>
           </>
         )}

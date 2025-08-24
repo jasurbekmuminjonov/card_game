@@ -4,10 +4,10 @@ const rawBaseQuery = fetchBaseQuery({
   // baseUrl: "http://localhost:8080/api/v1",
   baseUrl: "https://apicardgame.balerion.uz/api/v1",
   prepareHeaders: (headers) => {
-    const userId = localStorage.getItem("user_id");
+    const token = localStorage.getItem("token");
 
-    if (userId) {
-      headers.set("user_id", userId);
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
     }
 
     headers.set("Cache-Control", "no-cache");
@@ -20,6 +20,7 @@ const baseQuery = async (args, api, extraOptions) => {
 
   if (result.error && result.error.status === 401) {
     localStorage.removeItem("user_id");
+    localStorage.removeItem("token");
   }
 
   return result;

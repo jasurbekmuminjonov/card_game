@@ -1,14 +1,41 @@
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 exports.registerUser = async (req, res) => {
   try {
+    req.body.balance = 10000;
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(req.body.password, salt);
+    req.body.password = hashed;
     const user = await User.create(req.body);
-    const data = {
-      username: user.username,
-      user_id: user._id,
-    };
-    return res.status(201).json({ status: "success", data });
+    const token = jwt.sign({ user_id: user._id }, process.env.JWT_SECRET);
+
+    return res
+      .status(201)
+      .json({ status: "success", data: { token, user_id: user._id } });
+  } catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ status: "server_error", data: err });
+  }
+};
+
+exports.loginUser = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ status: "player_not_found" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ status: "access_denied" });
+    }
+    const token = jwt.sign({ user_id: user._id }, process.env.JWT_SECRET);
+    res
+      .status(200)
+      .json({ status: "success", data: { token, user_id: user._id } });
   } catch (err) {
     console.log(err.message);
     return res.status(500).json({ status: "server_error", data: err });
